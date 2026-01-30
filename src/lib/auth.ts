@@ -1,96 +1,132 @@
-import { NextAuthOptions } from 'next-auth';
-import CredentialsProvider from 'next-auth/providers/credentials';
-import bcrypt from 'bcryptjs';
-import { v4 as uuidv4 } from 'uuid';
-import db from './db';
+import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+import type { JWT } from "next-auth/jwt";
+import { checkPassword } from "@/utils/password";
+import { prisma } from "./prisma";
+import type { Role } from "../../prisma/generated/prisma/enums";
 
-interface DbUser {
-  id: string;
-  email: string;
-  name: string;
-  password_hash: string;
-  is_admin: number;
-  is_active: number;
-}
 
-export const authOptions: NextAuthOptions = {
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   providers: [
-    CredentialsProvider({
-      name: 'credentials',
+    Credentials({
       credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
+        email: {
+          type: "email",
+          label: "Email",
+          placeholder: "johndoe@gmail.com",
+        },
+        password: {
+          type: "password",
+          label: "Password",
+          placeholder: "*****",
+        },
       },
-      async authorize(credentials) {
+      authorize: async (credentials) => {
         if (!credentials?.email || !credentials?.password) {
-          return null;
+          throw new Error("Invalid credentials");
         }
 
-        const user = db
-          .prepare('SELECT * FROM users WHERE email = ?')
-          .get(credentials.email) as DbUser | undefined;
+        const email = (credentials.email as string).toLowerCase().trim();
+        
+        const user = await prisma.user.findUnique({
+          where: {
+            email: email,
+          },
+        });
 
         if (!user) {
-          return null;
+          throw new Error("Invalid credentials");
         }
 
-        // Check if user is deactivated
-        if (user.is_active === 0) {
-          return null;
+        if (user.isActive === false) {
+          throw new Error("User is deactivated.");
         }
 
-        const isValid = await bcrypt.compare(credentials.password, user.password_hash);
-
-        if (!isValid) {
-          return null;
+        if (
+          (await checkPassword(
+            credentials.password as string,
+            user.passwordHash,
+          )) === false
+        ) {
+          throw new Error("Invalid credentials");
         }
 
-        // Record login in history and update last_login timestamp
-        const loginId = uuidv4();
-        db.prepare(
-          'INSERT INTO login_history (id, user_id, logged_in_at) VALUES (?, ?, CURRENT_TIMESTAMP)'
-        ).run(loginId, user.id);
-        db.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').run(user.id);
+        await recordLoginHistory(user.id);
 
+        // Return user object without sensitive data (passwordHash)
+        // NextAuth will pass this to the jwt callback
+        // Note: NextAuth expects id as string internally
         return {
           id: user.id,
           email: user.email,
-          name: user.name,
-          isAdmin: user.is_admin === 1,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
         };
       },
     }),
   ],
   session: {
-    strategy: 'jwt',
+    strategy: "jwt",
   },
   pages: {
-    signIn: '/login',
+    signIn: "/login",
   },
   callbacks: {
-    async jwt({ token, user, trigger }) {
+    jwt: async ({ token, user, trigger }) => {
+      const extToken = token as JWT;
+      
+      // Initial sign in - user object is available from authorize callback
       if (user) {
-        token.id = user.id;
-        token.isAdmin = user.isAdmin;
+        extToken.id = user.id;
+        extToken.email = user.email!;
+        extToken.firstName = user.firstName;
+        extToken.lastName = user.lastName;
+        extToken.role = user.role;
       }
-      // Refresh admin status on session update
-      if (trigger === 'update') {
-        const dbUser = db
-          .prepare('SELECT is_admin FROM users WHERE id = ?')
-          .get(token.id) as { is_admin: number } | undefined;
+
+      // Handle session update trigger - refresh user data from database
+      if (trigger === "update" && extToken.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: {
+            id: typeof extToken.id === "number" ? extToken.id : parseInt(extToken.id, 10),
+          },
+        });
+
         if (dbUser) {
-          token.isAdmin = dbUser.is_admin === 1;
+          extToken.email = dbUser.email;
+          extToken.firstName = dbUser.firstName;
+          extToken.lastName = dbUser.lastName;
+          extToken.role = dbUser.role;
         }
       }
-      return token;
+
+      return extToken;
     },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        session.user.isAdmin = token.isAdmin as boolean;
+    session: async ({ session, token }) => {
+      const extToken = token as JWT;
+      
+      // Transfer token data to session.user
+      if (extToken) {
+        session.user = {
+          id: typeof extToken.id === "number" ? extToken.id : parseInt(extToken.id, 10),
+          email: extToken.email,
+          firstName: extToken.firstName,
+          lastName: extToken.lastName,
+          role: extToken.role,
+        } as typeof session.user;
       }
       return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET || 'your-secret-key-change-in-production',
-};
+});
+
+async function recordLoginHistory(userId: number) {
+  await prisma.loginRecord.create({
+    data: {
+      userId: userId,
+    },
+  });
+}

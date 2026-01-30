@@ -16,7 +16,7 @@ interface Meeting {
   end_date: string;
   start_time: string | null;
   end_time: string | null;
-  creator_id: string | null;
+  creator_id: number | null;
   share_link: string;
   is_private: number;
   created_at: string;
@@ -31,7 +31,7 @@ interface Slot {
 interface ResponseData {
   id: string;
   name: string;
-  user_id: string | null;
+  user_id: number | null;
   guest_name: string | null;
   slots: Array<{
     date: string;
@@ -151,9 +151,19 @@ export default function MeetingPage({
           setCanViewResults(true);
           // If user is logged in, check if they have an existing response
           if (session?.user?.id) {
-            const userResponse = data.responses?.find(
+            // First try to find by user_id
+            let userResponse = data.responses?.find(
               (r: ResponseData) => r.user_id === session.user.id,
             );
+            
+            // Fallback: try to find by name if not found by user_id
+            if (!userResponse) {
+              const userName = `${session.user.firstName} ${session.user.lastName}`;
+              userResponse = data.responses?.find(
+                (r: ResponseData) => r.name === userName,
+              );
+            }
+            
             if (userResponse) {
               setHasExistingResponse(true);
               // Load their existing slots
@@ -290,6 +300,9 @@ export default function MeetingPage({
   }
 
   if (requiresAuth) {
+    // Build the callback URL to return to this page after login
+    const callbackUrl = `/m/${resolvedParams.shareLink}`;
+    
     return (
       <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-gray-50 px-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
@@ -316,7 +329,7 @@ export default function MeetingPage({
             address to access it.
           </p>
           <Link
-            href="/login"
+            href={`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`}
             className="inline-block w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-3 px-6 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all"
           >
             Sign In
@@ -686,14 +699,14 @@ export default function MeetingPage({
           {!showResults && session && (
             <div className="mb-6 flex items-center gap-3 bg-gradient-to-r from-indigo-50 to-purple-50 px-4 py-3 rounded-xl border border-indigo-100">
               <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold shadow-md">
-                {session.user.name?.charAt(0).toUpperCase()}
+                {session.user.firstName?.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1">
                 <p className="font-medium text-gray-900">
                   {hasExistingResponse
                     ? "Updating availability as"
                     : "Responding as"}{" "}
-                  {session.user.name}
+                  {session.user.firstName} {session.user.lastName}
                 </p>
                 <p className="text-sm text-gray-500">{session.user.email}</p>
               </div>

@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id            Int           @id @default(autoincrement())
+  email         String        @unique
+  firstName     String
+  lastName      String
+  passwordHash  String
+  role          Role          @default(USER)
+  isActive      Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  deactivatedAt DateTime?
+  activatedAt   DateTime      @default(now())
+  meetings      Meeting[]
+  loginRecords  LoginRecord[]
+  meetingResponses MeetingResponse[]
+}
+
+model LoginRecord {
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int
+  loggedInAt DateTime @default(now())
+  ipAddress  String?
+  userAgent  String?
+
+  @@id([userId, loggedInAt])
+}
+
+model MeetingTimeWindow {
+  id        Int       @id @default(autoincrement())
+  startTime Int
+  endTime   Int
+  meetings  Meeting[]
+
+  @@unique([startTime, endTime])
+}
+
+model Meeting {
+  id               Int                @id @default(autoincrement())
+  title            String
+  description      String?
+  location         String?
+  startdate        DateTime
+  endDate          DateTime
+  timeWimdow       MeetingTimeWindow? @relation(fields: [timeWindowId], references: [id])
+  timeWindowId     Int?
+  creator          User?               @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  creatorId        Int?
+  shareLink        String             @unique
+  isPrivate        Boolean            @default(false)
+  createdAt        DateTime           @default(now())
+  meetingInvites   MeetingInvite[]
+  meetingResponses MeetingResponse[]
+}
+
+model MeetingInvite {
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  meetingId Int
+  email     String
+
+  @@id([meetingId, email])
+}
+
+model MeetingResponse {
+  id                Int                @id @default(autoincrement())
+  meeting           Meeting            @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  meetingId         Int
+  name              String
+  user              User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            Int?
+  availabilitySlots AvailabilitySlot[]
+
+  @@unique([meetingId, name])
+}
+
+model AvailabilitySlot {
+  id                Int             @id @default(autoincrement())
+  meetingResponse   MeetingResponse @relation(fields: [meetingResponseId], references: [id], onDelete: Cascade)
+  meetingResponseId Int
+  date              DateTime
+  startTime         Int
+  endTime           Int
+
+  @@unique([meetingResponseId, date, startTime, endTime])
+}

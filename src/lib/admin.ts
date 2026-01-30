@@ -1,17 +1,64 @@
-import { getServerSession } from 'next-auth';
-import db from './db';
-import { authOptions } from './auth';
+import bcrypt from "bcryptjs";
+import { prisma } from "./prisma";
+import { Role } from "../../prisma/generated/prisma/enums";
+import { auth } from "./auth";
+
+export async function initializeAdminUser(): Promise<void> {
+  const numAdmins = await prisma.user.count({
+    where: {
+      role: Role.ADMIN,
+    },
+  });
+
+  if (numAdmins !== 0) {
+    return;
+  }
+
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (!adminEmail || !adminPassword) {
+    console.warn(
+      "WARNING: No Admin user exists and ADMIN_EMAIL or ADMIN_PASSWORD was not provided.",
+    );
+    return; // No admin credentials provided
+  }
+
+  const user = await prisma.user.upsert({
+    where: {
+      email: adminEmail,
+    },
+    update: {
+      role: Role.ADMIN,
+    },
+    create: {
+      email: adminEmail,
+      passwordHash: await bcrypt.hash(adminPassword, 10),
+      firstName: "Admin",
+      lastName: "User",
+      role: Role.ADMIN,
+    },
+  });
+
+  console.log(`User with email ${user.email} is now an admin.`);
+}
 
 /**
  * Check if the current user is an admin
  * @returns Promise<boolean>
  */
 export async function isCurrentUserAdmin(): Promise<boolean> {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   if (!session?.user?.id) return false;
-  
-  const user = db.prepare('SELECT is_admin FROM users WHERE id = ?').get(session.user.id) as { is_admin: number } | undefined;
-  return user?.is_admin === 1;
+
+  return (
+    (await prisma.user.count({
+      where: {
+        id: session.user.id,
+        role: Role.ADMIN,
+      },
+    })) === 1
+  );
 }
 
 /**
@@ -19,9 +66,15 @@ export async function isCurrentUserAdmin(): Promise<boolean> {
  * @param userId - The user ID to check
  * @returns boolean
  */
-export function isUserActive(userId: string): boolean {
-  const user = db.prepare('SELECT is_active FROM users WHERE id = ?').get(userId) as { is_active: number } | undefined;
-  return user?.is_active === 1;
+export async function isUserActive(userId: number): Promise<boolean> {
+  return (
+    (await prisma.user.count({
+      where: {
+        id: userId,
+        isActive: true,
+      },
+    })) === 1
+  );
 }
 
 /**
@@ -29,7 +82,13 @@ export function isUserActive(userId: string): boolean {
  * @param userId - The user ID to check
  * @returns boolean
  */
-export function isUserAdmin(userId: string): boolean {
-  const user = db.prepare('SELECT is_admin FROM users WHERE id = ?').get(userId) as { is_admin: number } | undefined;
-  return user?.is_admin === 1;
+export async function isUserAdmin(userId: number): Promise<boolean> {
+  return (
+    (await prisma.user.count({
+      where: {
+        id: userId,
+        role: Role.ADMIN,
+      },
+    })) === 1
+  );
 }
