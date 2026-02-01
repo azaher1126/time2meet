@@ -27,9 +27,11 @@ export function RegisterForm({ callbackUrl }: RegisterFormProps) {
         <input type="hidden" name="callbackUrl" value={callbackUrl} />
       )}
 
-      {state?.error && (
+      {state?.errors && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-          {state.error}
+          {state.errors.map((error, index) => (
+            <p key={index}>{error}</p>
+          ))}
         </div>
       )}
 

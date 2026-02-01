@@ -6,28 +6,41 @@ import { redirect } from "next/navigation";
 import { AuthError } from "next-auth";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { prisma } from "@/lib/prisma";
+import {
+  LoginData,
+  loginSchema,
+  RegisterData,
+  registerSchema,
+} from "@/validators/auth";
+import { z } from "zod";
 
-export type LoginState = {
-  error?: string;
-  email?: string;
-} | null;
+export type LoginState =
+  | (Omit<LoginData, "callbackUrl" | "password"> & { errors?: string[] })
+  | null;
 
 export async function loginAction(
   _prevState: LoginState,
   formData: FormData,
 ): Promise<LoginState> {
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-  const callbackUrl = formData.get("callbackUrl") as string | null;
+  const rawData = Object.fromEntries(formData) as LoginData;
+  const loginData = loginSchema.safeParse(rawData);
+
+  if (!loginData.success) {
+    const flattendError = z.flattenError(loginData.error);
+
+    return {
+      email: rawData.email,
+      errors: flattendError.fieldErrors.email,
+    };
+  }
 
   // Validate callback URL - only allow relative paths to prevent open redirect
-  const redirectTo =
-    callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/dashboard";
+  const redirectTo = loginData.data.callbackUrl ?? "/dashboard";
 
   try {
     await signIn("credentials", {
-      email,
-      password,
+      email: loginData.data.email,
+      password: loginData.data.password,
       redirectTo,
     });
   } catch (error) {
@@ -36,80 +49,77 @@ export async function loginAction(
       throw error;
     }
     if (error instanceof AuthError) {
-      return { error: "Invalid email or password", email };
+      return {
+        email: rawData.email,
+        errors: ["Incorrect email or password"],
+      };
     }
-    return { error: "Something went wrong. Please try again.", email };
+    return {
+      email: rawData.email,
+      errors: ["Something went wrong. Please try again."],
+    };
   }
 
   // Won't reach here on success (redirect throws)
   return null;
 }
 
-export type RegisterState = {
-  error?: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
-} | null;
+export type RegisterState =
+  | (Omit<RegisterData, "password" | "confirmPassword" | "callbackUrl"> & {
+      errors?: string[];
+    })
+  | null;
 
 export async function registerAction(
   _prevState: RegisterState,
   formData: FormData,
 ): Promise<RegisterState> {
-  const firstName = formData.get("firstName") as string;
-  const lastName = formData.get("lastName") as string;
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-  const confirmPassword = formData.get("confirmPassword") as string;
-  const callbackUrl = formData.get("callbackUrl") as string | null;
+  const rawData = Object.fromEntries(formData) as RegisterData;
+  const registerData = registerSchema.safeParse(rawData);
+
+  const returnValues = {
+    firstName: rawData.firstName,
+    lastName: rawData.lastName,
+    email: rawData.email,
+  };
+
+  if (!registerData.success) {
+    return {
+      ...returnValues,
+      errors: registerData.error.issues.map((issue) => issue.message),
+    };
+  }
 
   // Validate callback URL - only allow relative paths to prevent open redirect
-  const redirectTo =
-    callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/dashboard";
-
-  // Preserve form data for errors
-  const formValues = { email, firstName, lastName };
-
-  // Validation
-  if (!firstName || !lastName || !email || !password) {
-    return { error: "All fields are required", ...formValues };
-  }
-
-  if (password !== confirmPassword) {
-    return { error: "Passwords do not match", ...formValues };
-  }
-
-  if (password.length < 6) {
-    return { error: "Password must be at least 6 characters", ...formValues };
-  }
+  const redirectTo = registerData.data.callbackUrl ?? "/dashboard";
 
   try {
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
+      where: { email: registerData.data.email },
     });
 
     if (existingUser) {
       return {
-        error: "An account with this email already exists",
-        ...formValues,
+        errors: ["An account with this email already exists"],
+        ...returnValues,
       };
     }
 
     // Create user
     await prisma.user.create({
       data: {
-        email: email.toLowerCase(),
-        firstName,
-        lastName,
-        passwordHash: await saltAndHashPassword(password),
+        email: registerData.data.email,
+        firstName: registerData.data.firstName,
+        lastName: registerData.data.lastName,
+        passwordHash: await saltAndHashPassword(registerData.data.password),
       },
     });
 
     // Sign in after registration
     await signIn("credentials", {
-      email,
-      password,
+      email: registerData.data.email,
+      password: registerData.data.password,
       redirectTo,
     });
   } catch (error) {
@@ -119,18 +129,21 @@ export async function registerAction(
     }
     if (error instanceof AuthError) {
       // Registration succeeded but sign-in failed - include callback URL in redirect
-      const loginUrl = callbackUrl
-        ? `/login?registered=true&callbackUrl=${encodeURIComponent(callbackUrl)}`
+      const loginUrl = registerData.data.callbackUrl
+        ? `/login?registered=true&callbackUrl=${encodeURIComponent(registerData.data.callbackUrl)}`
         : "/login?registered=true";
       redirect(loginUrl);
     }
     console.error("Registration error:", error);
-    return { error: "Something went wrong. Please try again.", ...formValues };
+    return {
+      errors: ["Something went wrong. Please try again."],
+      ...returnValues,
+    };
   }
 
   return null;
 }
 
 export async function signOutAction() {
-  await signOut({ redirectTo: "/" });
+  await signOut();
 }
