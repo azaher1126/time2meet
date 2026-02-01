@@ -35,7 +35,7 @@ export async function requireAuth(callbackUrl?: string, allowedRoles?: Role[]) {
     },
   });
 
-  if (!(user!.role in allowedRoles)) {
+  if (!allowedRoles.includes(user!.role)) {
     redirect(callbackUrl || REDIRECT_ROUTES.dashboard);
   }
 

@@ -1,8 +1,7 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
 import { format, isPast, isToday, isFuture } from "date-fns";
+import { TabView } from "../TabView";
+import { CopyLinkButton } from "../CopyButton";
 
 interface Meeting {
   id: number;
@@ -19,65 +18,20 @@ interface Meeting {
   };
 }
 
-interface DashboardContentProps {
-  firstName: string;
+interface DashboardTabViewProps {
   createdMeetings: Meeting[];
   respondedMeetings: Meeting[];
 }
 
-export function DashboardContent({
-  firstName,
+export function DashboardTabView({
   createdMeetings,
   respondedMeetings,
-}: DashboardContentProps) {
-  const [activeTab, setActiveTab] = useState<"created" | "responded">(
-    "created",
-  );
-
+}: DashboardTabViewProps) {
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-gray-50 py-8 sm:py-12">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Welcome back, {firstName}!
-            </h1>
-            <p className="mt-1 text-gray-600">
-              Manage your meetings and availability
-            </p>
-          </div>
-          <Link
-            href="/create"
-            className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            New Meeting
-          </Link>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6">
-          <button
-            onClick={() => setActiveTab("created")}
-            className={`flex-1 sm:flex-none px-6 py-3 rounded-xl font-medium transition-all ${
-              activeTab === "created"
-                ? "bg-indigo-600 text-white shadow-lg"
-                : "bg-white text-gray-700 hover:bg-gray-50 shadow"
-            }`}
-          >
+    <TabView
+      tabs={[
+        {
+          buttonContent: (
             <span className="flex items-center justify-center gap-2">
               <svg
                 className="w-5 h-5"
@@ -94,15 +48,21 @@ export function DashboardContent({
               </svg>
               Created ({createdMeetings.length})
             </span>
-          </button>
-          <button
-            onClick={() => setActiveTab("responded")}
-            className={`flex-1 sm:flex-none px-6 py-3 rounded-xl font-medium transition-all ${
-              activeTab === "responded"
-                ? "bg-indigo-600 text-white shadow-lg"
-                : "bg-white text-gray-700 hover:bg-gray-50 shadow"
-            }`}
-          >
+          ),
+          tabContent: (
+            <>
+              {createdMeetings.length === 0 ? (
+                <EmptyState type="created" />
+              ) : (
+                createdMeetings.map((meeting) => (
+                  <MeetingCard key={meeting.id} meeting={meeting} isCreator />
+                ))
+              )}
+            </>
+          ),
+        },
+        {
+          buttonContent: (
             <span className="flex items-center justify-center gap-2">
               <svg
                 className="w-5 h-5"
@@ -119,24 +79,8 @@ export function DashboardContent({
               </svg>
               Responded ({respondedMeetings.length})
             </span>
-          </button>
-        </div>
-
-        {/* Meeting List */}
-        <div className="space-y-4">
-          {activeTab === "created" && (
-            <>
-              {createdMeetings.length === 0 ? (
-                <EmptyState type="created" />
-              ) : (
-                createdMeetings.map((meeting) => (
-                  <MeetingCard key={meeting.id} meeting={meeting} isCreator />
-                ))
-              )}
-            </>
-          )}
-
-          {activeTab === "responded" && (
+          ),
+          tabContent: (
             <>
               {respondedMeetings.length === 0 ? (
                 <EmptyState type="responded" />
@@ -146,10 +90,10 @@ export function DashboardContent({
                 ))
               )}
             </>
-          )}
-        </div>
-      </div>
-    </div>
+          ),
+        },
+      ]}
+    />
   );
 }
 
@@ -220,15 +164,7 @@ function MeetingCard({
   meeting: Meeting;
   isCreator?: boolean;
 }) {
-  const [copied, setCopied] = useState(false);
-
-  const copyLink = () => {
-    navigator.clipboard.writeText(
-      `${window.location.origin}/m/${meeting.shareLink}`,
-    );
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const meetingLink = `m/${meeting.shareLink}`;
 
   const endDate = meeting.endDate;
   const startDate = meeting.startdate;
@@ -349,11 +285,10 @@ function MeetingCard({
 
           <div className="flex gap-2 shrink-0">
             {isCreator && (
-              <button
-                onClick={copyLink}
+              <CopyLinkButton
+                text={meetingLink}
                 className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-              >
-                {copied ? (
+                copiedChildren={
                   <>
                     <svg
                       className="w-4 h-4 text-green-600"
@@ -370,28 +305,28 @@ function MeetingCard({
                     </svg>
                     <span className="hidden sm:inline">Copied!</span>
                   </>
-                ) : (
-                  <>
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                      />
-                    </svg>
-                    <span className="hidden sm:inline">Share</span>
-                  </>
-                )}
-              </button>
+                }
+              >
+                <>
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                    />
+                  </svg>
+                  <span className="hidden sm:inline">Share</span>
+                </>
+              </CopyLinkButton>
             )}
             <Link
-              href={`/m/${meeting.shareLink}`}
+              href={meetingLink}
               className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
             >
               <span>View</span>
