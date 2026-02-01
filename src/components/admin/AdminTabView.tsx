@@ -1,15 +1,8 @@
-"use client";
-
-import { useState } from "react";
 import { AnalyticsTab } from "./AnalyticsTab";
 import { UsersTab } from "./UsersTab";
 import { MeetingsTab } from "./MeetingsTab";
-import type {
-  Analytics,
-  AdminUser,
-  AdminMeeting,
-  TabType,
-} from "../../types/admin";
+import type { Analytics, AdminUser, AdminMeeting } from "../../types/admin";
+import { TabView } from "../TabView";
 
 interface AdminContentProps {
   analytics: Analytics;
@@ -18,35 +11,17 @@ interface AdminContentProps {
   currentUserId: number;
 }
 
-export function AdminContent({
+export function AdminTabView({
   analytics,
   users,
   meetings,
   currentUserId,
 }: AdminContentProps) {
-  const [activeTab, setActiveTab] = useState<TabType>("analytics");
-
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="mt-1 text-gray-600">
-            Manage users, meetings, and view analytics
-          </p>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6 border-b border-gray-200 pb-4">
-          <button
-            onClick={() => setActiveTab("analytics")}
-            className={`px-6 py-3 rounded-xl font-medium transition-all ${
-              activeTab === "analytics"
-                ? "bg-indigo-600 text-white shadow-lg"
-                : "bg-white text-gray-700 hover:bg-gray-50 shadow"
-            }`}
-          >
+    <TabView
+      tabs={[
+        {
+          buttonContent: (
             <span className="flex items-center gap-2">
               <svg
                 className="w-5 h-5"
@@ -63,15 +38,11 @@ export function AdminContent({
               </svg>
               Analytics
             </span>
-          </button>
-          <button
-            onClick={() => setActiveTab("users")}
-            className={`px-6 py-3 rounded-xl font-medium transition-all ${
-              activeTab === "users"
-                ? "bg-indigo-600 text-white shadow-lg"
-                : "bg-white text-gray-700 hover:bg-gray-50 shadow"
-            }`}
-          >
+          ),
+          tabContent: <AnalyticsTab analytics={analytics} />,
+        },
+        {
+          buttonContent: (
             <span className="flex items-center gap-2">
               <svg
                 className="w-5 h-5"
@@ -88,15 +59,11 @@ export function AdminContent({
               </svg>
               Users ({users.length})
             </span>
-          </button>
-          <button
-            onClick={() => setActiveTab("meetings")}
-            className={`px-6 py-3 rounded-xl font-medium transition-all ${
-              activeTab === "meetings"
-                ? "bg-indigo-600 text-white shadow-lg"
-                : "bg-white text-gray-700 hover:bg-gray-50 shadow"
-            }`}
-          >
+          ),
+          tabContent: <UsersTab users={users} currentUserId={currentUserId} />,
+        },
+        {
+          buttonContent: (
             <span className="flex items-center gap-2">
               <svg
                 className="w-5 h-5"
@@ -113,16 +80,10 @@ export function AdminContent({
               </svg>
               Meetings ({meetings.length})
             </span>
-          </button>
-        </div>
-
-        {/* Content */}
-        {activeTab === "analytics" && <AnalyticsTab analytics={analytics} />}
-        {activeTab === "users" && (
-          <UsersTab users={users} currentUserId={currentUserId} />
-        )}
-        {activeTab === "meetings" && <MeetingsTab meetings={meetings} />}
-      </div>
-    </div>
+          ),
+          tabContent: <MeetingsTab meetings={meetings} />,
+        },
+      ]}
+    />
   );
 }
