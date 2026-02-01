@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/prisma";
 import { nanoid } from "nanoid";
 
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     if (!title || !startDate || !endDate) {
       return NextResponse.json(
         { error: "Title, start date, and end date are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
             ? {
                 create: invitedEmails
                   .filter(
-                    (email: unknown) => email && typeof email === "string"
+                    (email: unknown) => email && typeof email === "string",
                   )
                   .map((email: string) => ({
                     email: email.toLowerCase().trim(),
@@ -85,13 +85,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       { meetingId: meeting.id, shareLink },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Create meeting error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -149,12 +149,18 @@ export async function GET() {
       start_time: m.timeWimdow
         ? `${Math.floor(m.timeWimdow.startTime / 60)
             .toString()
-            .padStart(2, "0")}:${(m.timeWimdow.startTime % 60).toString().padStart(2, "0")}`
+            .padStart(
+              2,
+              "0",
+            )}:${(m.timeWimdow.startTime % 60).toString().padStart(2, "0")}`
         : null,
       end_time: m.timeWimdow
         ? `${Math.floor(m.timeWimdow.endTime / 60)
             .toString()
-            .padStart(2, "0")}:${(m.timeWimdow.endTime % 60).toString().padStart(2, "0")}`
+            .padStart(
+              2,
+              "0",
+            )}:${(m.timeWimdow.endTime % 60).toString().padStart(2, "0")}`
         : null,
       creator_id: m.creatorId,
       share_link: m.shareLink,
@@ -173,12 +179,18 @@ export async function GET() {
       start_time: m.timeWimdow
         ? `${Math.floor(m.timeWimdow.startTime / 60)
             .toString()
-            .padStart(2, "0")}:${(m.timeWimdow.startTime % 60).toString().padStart(2, "0")}`
+            .padStart(
+              2,
+              "0",
+            )}:${(m.timeWimdow.startTime % 60).toString().padStart(2, "0")}`
         : null,
       end_time: m.timeWimdow
         ? `${Math.floor(m.timeWimdow.endTime / 60)
             .toString()
-            .padStart(2, "0")}:${(m.timeWimdow.endTime % 60).toString().padStart(2, "0")}`
+            .padStart(
+              2,
+              "0",
+            )}:${(m.timeWimdow.endTime % 60).toString().padStart(2, "0")}`
         : null,
       creator_id: m.creatorId,
       share_link: m.shareLink,
@@ -195,7 +207,7 @@ export async function GET() {
     console.error("Get meetings error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

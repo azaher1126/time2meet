@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { LoginForm } from "@/components/LoginForm";
+import { LoginForm } from "@/components/auth/LoginForm";
+import { requireAnonymous } from "@/lib/auth/accessControl";
 
 interface LoginPageProps {
   searchParams: Promise<{ callbackUrl?: string }>;
@@ -8,12 +7,8 @@ interface LoginPageProps {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const { callbackUrl } = await searchParams;
-  
-  // Server-side auth check - redirect if already authenticated
-  const session = await auth();
-  if (session) {
-    redirect(callbackUrl || "/dashboard");
-  }
+
+  await requireAnonymous(callbackUrl);
 
   return (
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-gray-50 py-12 px-4">

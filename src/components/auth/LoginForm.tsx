@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
-import { loginAction, type LoginState } from "@/app/actions/auth";
+import { loginAction, type LoginState } from "@/actions/auth";
 import { SubmitButton } from "@/components/SubmitButton";
 
 interface LoginFormProps {
@@ -12,11 +12,11 @@ interface LoginFormProps {
 export function LoginForm({ callbackUrl }: LoginFormProps) {
   const [state, formAction] = useActionState<LoginState, FormData>(
     loginAction,
-    null
+    null,
   );
 
   // Build the register link with callback URL if present
-  const registerHref = callbackUrl 
+  const registerHref = callbackUrl
     ? `/register?callbackUrl=${encodeURIComponent(callbackUrl)}`
     : "/register";
 
@@ -26,7 +26,7 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
       {callbackUrl && (
         <input type="hidden" name="callbackUrl" value={callbackUrl} />
       )}
-      
+
       {state?.error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
           {state.error}

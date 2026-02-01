@@ -3,9 +3,9 @@
 import { useState, useMemo, useTransition } from "react";
 import { format, parseISO } from "date-fns";
 import { DataTable, Column } from "./DataTable";
-import { updateUserAction } from "../actions";
-import type { AdminUser } from "../types";
-import { Role } from "../../../../prisma/generated/prisma/enums";
+import { updateUserAction } from "@/actions/admin";
+import type { AdminUser } from "@/types/admin";
+import { Role } from "@/../prisma/generated/prisma/enums";
 
 interface UsersTabProps {
   users: AdminUser[];
@@ -16,14 +16,18 @@ export function UsersTab({ users, currentUserId }: UsersTabProps) {
   const [isPending, startTransition] = useTransition();
   const [actionUserId, setActionUserId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
+  const [filterStatus, setFilterStatus] = useState<
+    "all" | "active" | "inactive"
+  >("all");
   const [filterRole, setFilterRole] = useState<"all" | "admin" | "user">("all");
   const [showDateFilters, setShowDateFilters] = useState(false);
   const [joinedStartDate, setJoinedStartDate] = useState("");
   const [joinedEndDate, setJoinedEndDate] = useState("");
   const [lastLoginStartDate, setLastLoginStartDate] = useState("");
   const [lastLoginEndDate, setLastLoginEndDate] = useState("");
-  const [lastLoginFilter, setLastLoginFilter] = useState<"all" | "never" | "hasLoggedIn">("all");
+  const [lastLoginFilter, setLastLoginFilter] = useState<
+    "all" | "never" | "hasLoggedIn"
+  >("all");
 
   const hasDateFilters =
     joinedStartDate !== "" ||
@@ -40,7 +44,10 @@ export function UsersTab({ users, currentUserId }: UsersTabProps) {
     setLastLoginFilter("all");
   };
 
-  const handleAction = (userId: number, action: "activate" | "deactivate" | "elevate" | "demote") => {
+  const handleAction = (
+    userId: number,
+    action: "activate" | "deactivate" | "elevate" | "demote",
+  ) => {
     setActionUserId(userId);
     startTransition(async () => {
       await updateUserAction(userId, action);
@@ -89,19 +96,41 @@ export function UsersTab({ users, currentUserId }: UsersTabProps) {
         matchesLastLogin = !!user.last_login;
       }
 
-      if (matchesLastLogin && user.last_login && (lastLoginStartDate || lastLoginEndDate)) {
+      if (
+        matchesLastLogin &&
+        user.last_login &&
+        (lastLoginStartDate || lastLoginEndDate)
+      ) {
         const lastLoginDate = user.last_login.split("T")[0];
         if (lastLoginStartDate) {
-          matchesLastLogin = matchesLastLogin && lastLoginDate >= lastLoginStartDate;
+          matchesLastLogin =
+            matchesLastLogin && lastLoginDate >= lastLoginStartDate;
         }
         if (lastLoginEndDate) {
-          matchesLastLogin = matchesLastLogin && lastLoginDate <= lastLoginEndDate;
+          matchesLastLogin =
+            matchesLastLogin && lastLoginDate <= lastLoginEndDate;
         }
       }
 
-      return matchesSearch && matchesStatus && matchesRole && matchesJoinedDate && matchesLastLogin;
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesRole &&
+        matchesJoinedDate &&
+        matchesLastLogin
+      );
     });
-  }, [users, searchTerm, filterStatus, filterRole, joinedStartDate, joinedEndDate, lastLoginFilter, lastLoginStartDate, lastLoginEndDate]);
+  }, [
+    users,
+    searchTerm,
+    filterStatus,
+    filterRole,
+    joinedStartDate,
+    joinedEndDate,
+    lastLoginFilter,
+    lastLoginStartDate,
+    lastLoginEndDate,
+  ]);
 
   // Define table columns
   const columns: Column<AdminUser>[] = [
@@ -127,7 +156,9 @@ export function UsersTab({ users, currentUserId }: UsersTabProps) {
       render: (user) => (
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+            user.isActive
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
           }`}
         >
           {user.isActive ? "Active" : "Inactive"}
@@ -142,7 +173,9 @@ export function UsersTab({ users, currentUserId }: UsersTabProps) {
       render: (user) => (
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            user.role === Role.ADMIN ? "bg-purple-100 text-purple-800" : "bg-gray-100 text-gray-800"
+            user.role === Role.ADMIN
+              ? "bg-purple-100 text-purple-800"
+              : "bg-gray-100 text-gray-800"
           }`}
         >
           {user.role === Role.ADMIN ? "Admin" : "User"}
@@ -158,7 +191,9 @@ export function UsersTab({ users, currentUserId }: UsersTabProps) {
       render: (user) => (
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            user.meetings_count > 0 ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-500"
+            user.meetings_count > 0
+              ? "bg-blue-100 text-blue-800"
+              : "bg-gray-100 text-gray-500"
           }`}
         >
           {user.meetings_count}
@@ -174,7 +209,9 @@ export function UsersTab({ users, currentUserId }: UsersTabProps) {
       render: (user) => (
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            user.responses_count > 0 ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-500"
+            user.responses_count > 0
+              ? "bg-green-100 text-green-800"
+              : "bg-gray-100 text-gray-500"
           }`}
         >
           {user.responses_count}
@@ -190,7 +227,9 @@ export function UsersTab({ users, currentUserId }: UsersTabProps) {
       render: (user) => (
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            user.login_count > 0 ? "bg-indigo-100 text-indigo-800" : "bg-gray-100 text-gray-500"
+            user.login_count > 0
+              ? "bg-indigo-100 text-indigo-800"
+              : "bg-gray-100 text-gray-500"
           }`}
         >
           {user.login_count}
@@ -288,7 +327,9 @@ export function UsersTab({ users, currentUserId }: UsersTabProps) {
           />
           <select
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as "all" | "active" | "inactive")}
+            onChange={(e) =>
+              setFilterStatus(e.target.value as "all" | "active" | "inactive")
+            }
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           >
             <option value="all">All Status</option>
@@ -297,7 +338,9 @@ export function UsersTab({ users, currentUserId }: UsersTabProps) {
           </select>
           <select
             value={filterRole}
-            onChange={(e) => setFilterRole(e.target.value as "all" | "admin" | "user")}
+            onChange={(e) =>
+              setFilterRole(e.target.value as "all" | "admin" | "user")
+            }
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           >
             <option value="all">All Roles</option>
@@ -312,12 +355,24 @@ export function UsersTab({ users, currentUserId }: UsersTabProps) {
                 : "border-gray-300 text-gray-700 hover:bg-gray-50"
             }`}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
             </svg>
             Date Filters
             {hasDateFilters && (
-              <span className="bg-indigo-600 text-white text-xs px-1.5 py-0.5 rounded-full">!</span>
+              <span className="bg-indigo-600 text-white text-xs px-1.5 py-0.5 rounded-full">
+                !
+              </span>
             )}
           </button>
         </div>
@@ -329,14 +384,26 @@ export function UsersTab({ users, currentUserId }: UsersTabProps) {
               {/* Joined Date Range */}
               <div className="space-y-2">
                 <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                  <svg
+                    className="w-4 h-4 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                    />
                   </svg>
                   Date Joined
                 </h4>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">From</label>
+                    <label className="block text-xs text-gray-500 mb-1">
+                      From
+                    </label>
                     <input
                       type="date"
                       value={joinedStartDate}
@@ -345,7 +412,9 @@ export function UsersTab({ users, currentUserId }: UsersTabProps) {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">To</label>
+                    <label className="block text-xs text-gray-500 mb-1">
+                      To
+                    </label>
                     <input
                       type="date"
                       value={joinedEndDate}
@@ -359,15 +428,29 @@ export function UsersTab({ users, currentUserId }: UsersTabProps) {
               {/* Last Login Date Range */}
               <div className="space-y-2">
                 <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                  <svg
+                    className="w-4 h-4 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+                    />
                   </svg>
                   Last Login
                 </h4>
                 <div className="space-y-2">
                   <select
                     value={lastLoginFilter}
-                    onChange={(e) => setLastLoginFilter(e.target.value as "all" | "never" | "hasLoggedIn")}
+                    onChange={(e) =>
+                      setLastLoginFilter(
+                        e.target.value as "all" | "never" | "hasLoggedIn",
+                      )
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                   >
                     <option value="all">All Users</option>
@@ -377,16 +460,22 @@ export function UsersTab({ users, currentUserId }: UsersTabProps) {
                   {lastLoginFilter !== "never" && (
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">From</label>
+                        <label className="block text-xs text-gray-500 mb-1">
+                          From
+                        </label>
                         <input
                           type="date"
                           value={lastLoginStartDate}
-                          onChange={(e) => setLastLoginStartDate(e.target.value)}
+                          onChange={(e) =>
+                            setLastLoginStartDate(e.target.value)
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">To</label>
+                        <label className="block text-xs text-gray-500 mb-1">
+                          To
+                        </label>
                         <input
                           type="date"
                           value={lastLoginEndDate}
@@ -406,8 +495,18 @@ export function UsersTab({ users, currentUserId }: UsersTabProps) {
                   onClick={clearDateFilters}
                   className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-1"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                   Clear Date Filters
                 </button>
@@ -421,7 +520,11 @@ export function UsersTab({ users, currentUserId }: UsersTabProps) {
       <div className="flex items-center justify-between text-sm text-gray-600">
         <span>
           Showing {filteredUsers.length} of {users.length} users
-          {(searchTerm || filterStatus !== "all" || filterRole !== "all" || hasDateFilters) && " (filtered)"}
+          {(searchTerm ||
+            filterStatus !== "all" ||
+            filterRole !== "all" ||
+            hasDateFilters) &&
+            " (filtered)"}
         </span>
       </div>
 
@@ -433,7 +536,9 @@ export function UsersTab({ users, currentUserId }: UsersTabProps) {
         defaultSortKey="created_at"
         defaultSortDirection="desc"
         emptyMessage="No users found matching your filters."
-        rowClassName={(user) => (!user.isActive ? "bg-gray-50" : "hover:bg-gray-50 transition-colors")}
+        rowClassName={(user) =>
+          !user.isActive ? "bg-gray-50" : "hover:bg-gray-50 transition-colors"
+        }
       />
     </div>
   );

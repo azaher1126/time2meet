@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 import { Role } from "../../prisma/generated/prisma/enums";
-import { auth } from "./auth";
+import { auth } from "./auth/auth";
 
 export async function initializeAdminUser(): Promise<void> {
   const numAdmins = await prisma.user.count({
@@ -30,6 +30,7 @@ export async function initializeAdminUser(): Promise<void> {
     },
     update: {
       role: Role.ADMIN,
+      isActive: true,
     },
     create: {
       email: adminEmail,

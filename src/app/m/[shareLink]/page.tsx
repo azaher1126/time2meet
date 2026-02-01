@@ -62,7 +62,6 @@ export default function MeetingPage({
   const [copied, setCopied] = useState(false);
   const [hasExistingResponse, setHasExistingResponse] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [responsesLoaded, setResponsesLoaded] = useState(false);
 
   // Check for existing guest response when name changes - fetch from API
   const checkGuestResponse = useCallback(
@@ -128,7 +127,6 @@ export default function MeetingPage({
 
       if (response.ok) {
         setResponses(data.responses || []);
-        setResponsesLoaded(true);
 
         // Check if this is a userResponseOnly result (private meeting, non-creator)
         // In this case, user can see their own response but not all results
@@ -155,7 +153,7 @@ export default function MeetingPage({
             let userResponse = data.responses?.find(
               (r: ResponseData) => r.user_id === session.user.id,
             );
-            
+
             // Fallback: try to find by name if not found by user_id
             if (!userResponse) {
               const userName = `${session.user.firstName} ${session.user.lastName}`;
@@ -163,7 +161,7 @@ export default function MeetingPage({
                 (r: ResponseData) => r.name === userName,
               );
             }
-            
+
             if (userResponse) {
               setHasExistingResponse(true);
               // Load their existing slots
@@ -302,7 +300,7 @@ export default function MeetingPage({
   if (requiresAuth) {
     // Build the callback URL to return to this page after login
     const callbackUrl = `/m/${resolvedParams.shareLink}`;
-    
+
     return (
       <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-gray-50 px-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">

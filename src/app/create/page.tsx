@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { format, addDays, differenceInDays } from "date-fns";
@@ -10,7 +10,6 @@ export default function CreateMeeting() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [step, setStep] = useState(1);
 
   const today = format(new Date(), "yyyy-MM-dd");
   const nextWeek = format(addDays(new Date(), 7), "yyyy-MM-dd");

@@ -1,11 +1,8 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import type { JWT } from "next-auth/jwt";
-import { checkPassword } from "@/utils/password";
-import { prisma } from "./prisma";
-import type { Role } from "../../prisma/generated/prisma/enums";
-
-
+import { prisma } from "../prisma";
+import { checkPassword } from "./password";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
@@ -29,7 +26,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         const email = (credentials.email as string).toLowerCase().trim();
-        
+
         const user = await prisma.user.findUnique({
           where: {
             email: email,
@@ -77,7 +74,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     jwt: async ({ token, user, trigger }) => {
       const extToken = token as JWT;
-      
+
       // Initial sign in - user object is available from authorize callback
       if (user) {
         extToken.id = user.id;
@@ -91,7 +88,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (trigger === "update" && extToken.id) {
         const dbUser = await prisma.user.findUnique({
           where: {
-            id: typeof extToken.id === "number" ? extToken.id : parseInt(extToken.id, 10),
+            id:
+              typeof extToken.id === "number"
+                ? extToken.id
+                : parseInt(extToken.id, 10),
           },
         });
 
@@ -107,11 +107,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     session: async ({ session, token }) => {
       const extToken = token as JWT;
-      
+
       // Transfer token data to session.user
       if (extToken) {
         session.user = {
-          id: typeof extToken.id === "number" ? extToken.id : parseInt(extToken.id, 10),
+          id:
+            typeof extToken.id === "number"
+              ? extToken.id
+              : parseInt(extToken.id, 10),
           email: extToken.email,
           firstName: extToken.firstName,
           lastName: extToken.lastName,

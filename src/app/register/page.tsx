@@ -1,19 +1,16 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { RegisterForm } from "@/components/RegisterForm";
+import { RegisterForm } from "@/components/auth/RegisterForm";
+import { requireAnonymous } from "@/lib/auth/accessControl";
 
 interface RegisterPageProps {
   searchParams: Promise<{ callbackUrl?: string }>;
 }
 
-export default async function RegisterPage({ searchParams }: RegisterPageProps) {
+export default async function RegisterPage({
+  searchParams,
+}: RegisterPageProps) {
   const { callbackUrl } = await searchParams;
-  
-  // Server-side auth check - redirect if already authenticated
-  const session = await auth();
-  if (session) {
-    redirect(callbackUrl || "/dashboard");
-  }
+
+  await requireAnonymous(callbackUrl);
 
   return (
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-gray-50 py-12 px-4">
@@ -40,7 +37,6 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
             <p className="mt-2 text-indigo-100">Join time2meet today</p>
           </div>
 
-          {/* Form (client component) */}
           <RegisterForm callbackUrl={callbackUrl} />
         </div>
       </div>

@@ -1,10 +1,16 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/prisma";
-import { AdminContent } from "./components/AdminContent";
+import { AdminContent } from "../../components/admin/AdminContent";
 import { Role } from "../../../prisma/generated/prisma/enums";
 import { format, subDays } from "date-fns";
-import type { Analytics, AdminUser, AdminMeeting, DailyData } from "./types";
+import type {
+  Analytics,
+  AdminUser,
+  AdminMeeting,
+  DailyData,
+} from "../../types/admin";
+import { requireAuth } from "@/lib/auth/accessControl";
 
 // Helper to calculate growth rate
 function calculateGrowthRate(current: number, previous: number): number {
@@ -13,7 +19,7 @@ function calculateGrowthRate(current: number, previous: number): number {
 }
 
 // Fetch all admin data directly from Prisma
-async function getAdminData(currentUserId: number) {
+async function getAdminData() {
   const today = new Date();
   const thirtyDaysAgo = subDays(today, 30);
   const last30Days: string[] = [];
@@ -61,7 +67,7 @@ async function getAdminData(currentUserId: number) {
         responses_count: responsesCount,
         login_count: user._count.loginRecords,
       };
-    })
+    }),
   );
 
   // Fetch meetings with stats
@@ -91,13 +97,25 @@ async function getAdminData(currentUserId: number) {
     start_date: meeting.startdate.toISOString().split("T")[0],
     end_date: meeting.endDate.toISOString().split("T")[0],
     start_time: meeting.timeWimdow
-      ? `${Math.floor(meeting.timeWimdow.startTime / 60).toString().padStart(2, "0")}:${(meeting.timeWimdow.startTime % 60).toString().padStart(2, "0")}`
+      ? `${Math.floor(meeting.timeWimdow.startTime / 60)
+          .toString()
+          .padStart(
+            2,
+            "0",
+          )}:${(meeting.timeWimdow.startTime % 60).toString().padStart(2, "0")}`
       : null,
     end_time: meeting.timeWimdow
-      ? `${Math.floor(meeting.timeWimdow.endTime / 60).toString().padStart(2, "0")}:${(meeting.timeWimdow.endTime % 60).toString().padStart(2, "0")}`
+      ? `${Math.floor(meeting.timeWimdow.endTime / 60)
+          .toString()
+          .padStart(
+            2,
+            "0",
+          )}:${(meeting.timeWimdow.endTime % 60).toString().padStart(2, "0")}`
       : null,
     creator_id: meeting.creatorId,
-    creator_name: meeting.creator ? `${meeting.creator.firstName} ${meeting.creator.lastName}` : "Anonymous",
+    creator_name: meeting.creator
+      ? `${meeting.creator.firstName} ${meeting.creator.lastName}`
+      : "Anonymous",
     creator_email: meeting.creator ? meeting.creator.email : null,
     share_link: meeting.shareLink,
     is_private: meeting.isPrivate,
@@ -175,17 +193,33 @@ async function getAdminData(currentUserId: number) {
   }));
 
   // Calculate growth rates
-  const last7DaysUsers = usersData.slice(-7).reduce((sum, d) => sum + d.count, 0);
-  const prev7DaysUsers = usersData.slice(-14, -7).reduce((sum, d) => sum + d.count, 0);
+  const last7DaysUsers = usersData
+    .slice(-7)
+    .reduce((sum, d) => sum + d.count, 0);
+  const prev7DaysUsers = usersData
+    .slice(-14, -7)
+    .reduce((sum, d) => sum + d.count, 0);
 
-  const last7DaysMeetings = meetingsData.slice(-7).reduce((sum, d) => sum + d.count, 0);
-  const prev7DaysMeetings = meetingsData.slice(-14, -7).reduce((sum, d) => sum + d.count, 0);
+  const last7DaysMeetings = meetingsData
+    .slice(-7)
+    .reduce((sum, d) => sum + d.count, 0);
+  const prev7DaysMeetings = meetingsData
+    .slice(-14, -7)
+    .reduce((sum, d) => sum + d.count, 0);
 
-  const last7DaysResponses = responsesData.slice(-7).reduce((sum, d) => sum + d.count, 0);
-  const prev7DaysResponses = responsesData.slice(-14, -7).reduce((sum, d) => sum + d.count, 0);
+  const last7DaysResponses = responsesData
+    .slice(-7)
+    .reduce((sum, d) => sum + d.count, 0);
+  const prev7DaysResponses = responsesData
+    .slice(-14, -7)
+    .reduce((sum, d) => sum + d.count, 0);
 
-  const last7DaysLogins = loginsData.slice(-7).reduce((sum, d) => sum + d.count, 0);
-  const prev7DaysLogins = loginsData.slice(-14, -7).reduce((sum, d) => sum + d.count, 0);
+  const last7DaysLogins = loginsData
+    .slice(-7)
+    .reduce((sum, d) => sum + d.count, 0);
+  const prev7DaysLogins = loginsData
+    .slice(-14, -7)
+    .reduce((sum, d) => sum + d.count, 0);
 
   const todayLogins = loginsData[loginsData.length - 1]?.count || 0;
 
@@ -222,26 +256,11 @@ async function getAdminData(currentUserId: number) {
 }
 
 export default async function AdminPage() {
-  // Server-side authentication check
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
+  const session = await requireAuth(undefined, [Role.ADMIN]);
   const userId = session.user.id;
 
-  // Check if user is admin
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  });
-
-  if (!user || user.role !== Role.ADMIN) {
-    redirect("/dashboard");
-  }
-
   // Fetch all admin data
-  const { users, meetings, analytics } = await getAdminData(userId);
+  const { users, meetings, analytics } = await getAdminData();
 
   return (
     <AdminContent

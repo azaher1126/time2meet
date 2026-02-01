@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Session } from "next-auth";
 import { Role } from "../../prisma/generated/prisma/enums";
-import { SignOutButton } from "./SignOutButton";
+import { SignOutButton } from "./auth/SignOutButton";
 import { MobileMenu } from "./MobileMenu";
 
 interface NavbarProps {
@@ -15,7 +15,7 @@ export default function Navbar({ session }: NavbarProps) {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link
-              href="/"
+              href={session ? "/dashboard" : "/"}
               className="flex items-center space-x-2 text-white font-bold text-xl hover:opacity-90 transition-opacity"
             >
               <svg

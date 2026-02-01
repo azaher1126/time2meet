@@ -26,7 +26,7 @@ interface AvailabilityGridProps {
 
 function generateTimeSlots(start: string, end: string): string[] {
   const slots: string[] = [];
-  let [startHour, startMin] = start.split(":").map(Number);
+  const [startHour, startMin] = start.split(":").map(Number);
   let [endHour, endMin] = end.split(":").map(Number);
 
   // Handle edge case where no time window is set (full day)

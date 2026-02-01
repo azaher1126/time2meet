@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/prisma";
 
 interface SlotInput {
@@ -10,7 +10,7 @@ interface SlotInput {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ shareLink: string }> }
+  { params }: { params: Promise<{ shareLink: string }> },
 ) {
   try {
     const { shareLink } = await params;
@@ -34,18 +34,18 @@ export async function POST(
       if (!session?.user?.email) {
         return NextResponse.json(
           { error: "This meeting requires authentication" },
-          { status: 403 }
+          { status: 403 },
         );
       }
 
       const isInvited = invites.some(
-        (inv) => inv.email.toLowerCase() === session.user.email.toLowerCase()
+        (inv) => inv.email.toLowerCase() === session.user.email.toLowerCase(),
       );
 
       if (!isInvited) {
         return NextResponse.json(
           { error: "You are not invited to this meeting" },
-          { status: 403 }
+          { status: 403 },
         );
       }
     }
@@ -61,7 +61,7 @@ export async function POST(
     } else {
       return NextResponse.json(
         { error: "Guest name is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -69,7 +69,7 @@ export async function POST(
     const response = await prisma.$transaction(async (tx) => {
       // Find existing response - for logged-in users, first try by userId
       let existingResponse = null;
-      
+
       if (userId) {
         // For logged-in users, look up by userId first
         existingResponse = await tx.meetingResponse.findFirst({
@@ -79,7 +79,7 @@ export async function POST(
           },
         });
       }
-      
+
       // If not found by userId, try by name
       if (!existingResponse) {
         existingResponse = await tx.meetingResponse.findUnique({
@@ -97,7 +97,7 @@ export async function POST(
         await tx.availabilitySlot.deleteMany({
           where: { meetingResponseId: existingResponse.id },
         });
-        
+
         // Update the response to ensure userId and name are current
         existingResponse = await tx.meetingResponse.update({
           where: { id: existingResponse.id },
@@ -133,7 +133,7 @@ export async function POST(
         });
 
         await tx.availabilitySlot.createMany({
-          data: slotData
+          data: slotData,
         });
       }
 
@@ -142,20 +142,20 @@ export async function POST(
 
     return NextResponse.json(
       { message: "Response saved successfully", responseId: response.id },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Save response error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ shareLink: string }> }
+  { params }: { params: Promise<{ shareLink: string }> },
 ) {
   try {
     const { shareLink } = await params;
@@ -177,17 +177,23 @@ export async function GET(
 
     // Helper to format slots
     const formatSlots = (
-      slots: { id: number; date: Date; startTime: number; endTime: number }[]
+      slots: { id: number; date: Date; startTime: number; endTime: number }[],
     ) =>
       slots.map((slot) => ({
         id: slot.id,
         date: slot.date.toISOString().split("T")[0],
         start_time: `${Math.floor(slot.startTime / 60)
           .toString()
-          .padStart(2, "0")}:${(slot.startTime % 60).toString().padStart(2, "0")}`,
+          .padStart(
+            2,
+            "0",
+          )}:${(slot.startTime % 60).toString().padStart(2, "0")}`,
         end_time: `${Math.floor(slot.endTime / 60)
           .toString()
-          .padStart(2, "0")}:${(slot.endTime % 60).toString().padStart(2, "0")}`,
+          .padStart(
+            2,
+            "0",
+          )}:${(slot.endTime % 60).toString().padStart(2, "0")}`,
       }));
 
     // If a specific guest name is provided, return only that guest's response
@@ -232,7 +238,7 @@ export async function GET(
           },
           include: { availabilitySlots: true },
         });
-        
+
         // Fallback to name lookup if not found by userId
         if (!userResponse) {
           const userName = `${session.user.firstName} ${session.user.lastName}`;
@@ -265,7 +271,7 @@ export async function GET(
 
       return NextResponse.json(
         { error: "Only the creator can view results for this meeting" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -288,7 +294,7 @@ export async function GET(
     console.error("Get responses error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

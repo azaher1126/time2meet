@@ -1,6 +1,5 @@
 import "next-auth";
 import { DefaultUser } from "next-auth";
-import type { AdapterUser } from "next-auth/adapters";
 import type { Role } from "../../prisma/generated/prisma/enums";
 
 declare module "next-auth" {

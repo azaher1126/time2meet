@@ -1,11 +1,11 @@
 "use server";
 
-import { signIn, signOut } from "@/lib/auth";
+import { signIn, signOut } from "@/lib/auth/auth";
+import { saltAndHashPassword } from "@/lib/auth/password";
 import { redirect } from "next/navigation";
 import { AuthError } from "next-auth";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { prisma } from "@/lib/prisma";
-import { saltAndHashPassword } from "@/utils/password";
 
 export type LoginState = {
   error?: string;
@@ -14,16 +14,15 @@ export type LoginState = {
 
 export async function loginAction(
   _prevState: LoginState,
-  formData: FormData
+  formData: FormData,
 ): Promise<LoginState> {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const callbackUrl = formData.get("callbackUrl") as string | null;
 
   // Validate callback URL - only allow relative paths to prevent open redirect
-  const redirectTo = callbackUrl && callbackUrl.startsWith("/") 
-    ? callbackUrl 
-    : "/dashboard";
+  const redirectTo =
+    callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/dashboard";
 
   try {
     await signIn("credentials", {
@@ -55,7 +54,7 @@ export type RegisterState = {
 
 export async function registerAction(
   _prevState: RegisterState,
-  formData: FormData
+  formData: FormData,
 ): Promise<RegisterState> {
   const firstName = formData.get("firstName") as string;
   const lastName = formData.get("lastName") as string;
@@ -65,9 +64,8 @@ export async function registerAction(
   const callbackUrl = formData.get("callbackUrl") as string | null;
 
   // Validate callback URL - only allow relative paths to prevent open redirect
-  const redirectTo = callbackUrl && callbackUrl.startsWith("/") 
-    ? callbackUrl 
-    : "/dashboard";
+  const redirectTo =
+    callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/dashboard";
 
   // Preserve form data for errors
   const formValues = { email, firstName, lastName };
@@ -92,7 +90,10 @@ export async function registerAction(
     });
 
     if (existingUser) {
-      return { error: "An account with this email already exists", ...formValues };
+      return {
+        error: "An account with this email already exists",
+        ...formValues,
+      };
     }
 
     // Create user
@@ -118,7 +119,7 @@ export async function registerAction(
     }
     if (error instanceof AuthError) {
       // Registration succeeded but sign-in failed - include callback URL in redirect
-      const loginUrl = callbackUrl 
+      const loginUrl = callbackUrl
         ? `/login?registered=true&callbackUrl=${encodeURIComponent(callbackUrl)}`
         : "/login?registered=true";
       redirect(loginUrl);

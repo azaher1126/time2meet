@@ -1,4 +1,4 @@
-import { Role } from "../../../prisma/generated/prisma/enums";
+import { Role } from "@/../prisma/generated/prisma/enums";
 
 // Analytics types
 export interface DailyData {

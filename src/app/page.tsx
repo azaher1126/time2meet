@@ -1,6 +1,9 @@
+import { requireAnonymous } from "@/lib/auth/accessControl";
 import Link from "next/link";
 
-export default function Home() {
+export default async function Home() {
+  await requireAnonymous();
+
   return (
     <div className="min-h-[calc(100vh-64px)]">
       {/* Hero Section */}

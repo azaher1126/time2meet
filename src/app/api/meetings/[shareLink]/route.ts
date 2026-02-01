@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ shareLink: string }> }
+  { params }: { params: Promise<{ shareLink: string }> },
 ) {
   try {
     const { shareLink } = await params;
@@ -35,18 +35,18 @@ export async function GET(
       if (!session?.user?.email) {
         return NextResponse.json(
           { error: "This meeting requires authentication", requiresAuth: true },
-          { status: 403 }
+          { status: 403 },
         );
       }
 
       const isInvited = invites.some(
-        (inv) => inv.email.toLowerCase() === session.user.email.toLowerCase()
+        (inv) => inv.email.toLowerCase() === session.user.email.toLowerCase(),
       );
 
       if (!isInvited) {
         return NextResponse.json(
           { error: "You are not invited to this meeting" },
-          { status: 403 }
+          { status: 403 },
         );
       }
     }
@@ -62,12 +62,18 @@ export async function GET(
       start_time: meeting.timeWimdow
         ? `${Math.floor(meeting.timeWimdow.startTime / 60)
             .toString()
-            .padStart(2, "0")}:${(meeting.timeWimdow.startTime % 60).toString().padStart(2, "0")}`
+            .padStart(
+              2,
+              "0",
+            )}:${(meeting.timeWimdow.startTime % 60).toString().padStart(2, "0")}`
         : null,
       end_time: meeting.timeWimdow
         ? `${Math.floor(meeting.timeWimdow.endTime / 60)
             .toString()
-            .padStart(2, "0")}:${(meeting.timeWimdow.endTime % 60).toString().padStart(2, "0")}`
+            .padStart(
+              2,
+              "0",
+            )}:${(meeting.timeWimdow.endTime % 60).toString().padStart(2, "0")}`
         : null,
       creator_id: meeting.creatorId,
       share_link: meeting.shareLink,
@@ -83,14 +89,14 @@ export async function GET(
     console.error("Get meeting error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ shareLink: string }> }
+  { params }: { params: Promise<{ shareLink: string }> },
 ) {
   try {
     const { shareLink } = await params;
@@ -99,7 +105,7 @@ export async function PUT(
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -117,7 +123,7 @@ export async function PUT(
     if (meeting.creatorId !== userId) {
       return NextResponse.json(
         { error: "Only the creator can edit this meeting" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -136,7 +142,7 @@ export async function PUT(
     if (!title || !startDate || !endDate) {
       return NextResponse.json(
         { error: "Title, start date, and end date are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -210,14 +216,14 @@ export async function PUT(
     console.error("Update meeting error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ shareLink: string }> }
+  { params }: { params: Promise<{ shareLink: string }> },
 ) {
   try {
     const { shareLink } = await params;
@@ -226,7 +232,7 @@ export async function DELETE(
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -244,7 +250,7 @@ export async function DELETE(
     if (meeting.creatorId !== userId) {
       return NextResponse.json(
         { error: "Only the creator can delete this meeting" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -258,7 +264,7 @@ export async function DELETE(
     console.error("Delete meeting error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

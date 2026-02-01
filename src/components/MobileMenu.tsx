@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { SignOutButton } from "./SignOutButton";
+import { SignOutButton } from "./auth/SignOutButton";
 import type { Session } from "next-auth";
-import { Role } from "../../prisma/generated/prisma/enums";
+import { Role } from "@/../prisma/generated/prisma/enums";
 
 interface MobileMenuProps {
   session: Session | null;

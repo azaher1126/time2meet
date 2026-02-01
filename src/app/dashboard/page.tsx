@@ -1,14 +1,9 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { DashboardContent } from "@/components/DashboardContent";
+import { requireAuth } from "@/lib/auth/accessControl";
 
 export default async function DashboardPage() {
-  // Server-side auth check
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
+  const session = await requireAuth("/dashboard");
 
   const userId = session.user.id;
 

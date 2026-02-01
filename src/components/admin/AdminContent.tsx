@@ -4,7 +4,12 @@ import { useState } from "react";
 import { AnalyticsTab } from "./AnalyticsTab";
 import { UsersTab } from "./UsersTab";
 import { MeetingsTab } from "./MeetingsTab";
-import type { Analytics, AdminUser, AdminMeeting, TabType } from "../types";
+import type {
+  Analytics,
+  AdminUser,
+  AdminMeeting,
+  TabType,
+} from "../../types/admin";
 
 interface AdminContentProps {
   analytics: Analytics;

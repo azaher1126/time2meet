@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { format, parseISO, isPast, isToday, isFuture } from "date-fns";
+import { format, isPast, isToday, isFuture } from "date-fns";
 
 interface Meeting {
   id: number;
@@ -30,7 +30,9 @@ export function DashboardContent({
   createdMeetings,
   respondedMeetings,
 }: DashboardContentProps) {
-  const [activeTab, setActiveTab] = useState<"created" | "responded">("created");
+  const [activeTab, setActiveTab] = useState<"created" | "responded">(
+    "created",
+  );
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-gray-50 py-8 sm:py-12">
@@ -222,7 +224,7 @@ function MeetingCard({
 
   const copyLink = () => {
     navigator.clipboard.writeText(
-      `${window.location.origin}/m/${meeting.shareLink}`
+      `${window.location.origin}/m/${meeting.shareLink}`,
     );
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -291,7 +293,8 @@ function MeetingCard({
                   />
                 </svg>
                 <span>
-                  {format(startDate, "MMM d")} - {format(endDate, "MMM d, yyyy")}
+                  {format(startDate, "MMM d")} -{" "}
+                  {format(endDate, "MMM d, yyyy")}
                 </span>
               </div>
               {isCreator && meeting._count && (
@@ -336,7 +339,9 @@ function MeetingCard({
                       d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                     />
                   </svg>
-                  <span className="truncate max-w-[150px]">{meeting.location}</span>
+                  <span className="truncate max-w-[150px]">
+                    {meeting.location}
+                  </span>
                 </div>
               )}
             </div>

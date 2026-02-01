@@ -1,7 +1,7 @@
 "use client";
 
 import { format, parseISO } from "date-fns";
-import type { DailyData } from "../types";
+import type { DailyData } from "@/types/admin";
 
 interface ChartCardProps {
   title: string;
@@ -29,7 +29,7 @@ export function ChartCard({ title, data, color }: ChartCardProps) {
 
   // Generate Y-axis labels (5 steps)
   const yAxisLabels = [0, 1, 2, 3, 4].map((i) =>
-    Math.round((maxCount / 4) * (4 - i))
+    Math.round((maxCount / 4) * (4 - i)),
   );
 
   return (
@@ -97,13 +97,14 @@ export function ChartCard({ title, data, color }: ChartCardProps) {
           {/* X-Axis Labels */}
           <div className="flex justify-between mt-2 text-xs text-gray-400 pl-1">
             <span>
-              {data[0]?.date
-                ? format(parseISO(data[0].date), "MMM d")
-                : ""}
+              {data[0]?.date ? format(parseISO(data[0].date), "MMM d") : ""}
             </span>
             <span>
               {data[Math.floor(data.length / 2)]?.date
-                ? format(parseISO(data[Math.floor(data.length / 2)].date), "MMM d")
+                ? format(
+                    parseISO(data[Math.floor(data.length / 2)].date),
+                    "MMM d",
+                  )
                 : ""}
             </span>
             <span>

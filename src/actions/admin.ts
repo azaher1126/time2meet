@@ -1,9 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/prisma";
-import { Role } from "../../../prisma/generated/prisma/enums";
+import { Role } from "../../prisma/generated/prisma/enums";
 
 // Helper to check if current user is admin
 async function requireAdmin() {
@@ -26,7 +26,7 @@ async function requireAdmin() {
 // User actions
 export async function updateUserAction(
   userId: number,
-  action: "activate" | "deactivate" | "elevate" | "demote"
+  action: "activate" | "deactivate" | "elevate" | "demote",
 ) {
   const { currentUserId } = await requireAdmin();
 

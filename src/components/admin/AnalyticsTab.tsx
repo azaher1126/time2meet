@@ -2,7 +2,7 @@
 
 import { StatCard } from "./StatCard";
 import { ChartCard } from "./ChartCard";
-import type { Analytics } from "../types";
+import type { Analytics } from "@/types/admin";
 
 interface AnalyticsTabProps {
   analytics: Analytics;
@@ -112,7 +112,7 @@ export function AnalyticsTab({ analytics }: AnalyticsTabProps) {
           value={
             analytics.totals.meetings > 0
               ? Math.round(
-                  (analytics.totals.responses / analytics.totals.meetings) * 10
+                  (analytics.totals.responses / analytics.totals.meetings) * 10,
                 ) / 10
               : 0
           }
