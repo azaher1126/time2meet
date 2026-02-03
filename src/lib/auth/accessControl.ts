@@ -30,6 +30,9 @@ export async function requireAuth(callbackUrl?: string, allowedRoles?: Role[]) {
   }
 
   const user = await prisma.user.findUnique({
+    select: {
+      role: true,
+    },
     where: {
       id: session.user.id,
     },

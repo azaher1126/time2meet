@@ -92,7 +92,7 @@ async function getAdminData() {
     title: meeting.title,
     description: meeting.description,
     location: meeting.location,
-    start_date: meeting.startdate.toISOString().split("T")[0],
+    start_date: meeting.startDate.toISOString().split("T")[0],
     end_date: meeting.endDate.toISOString().split("T")[0],
     start_time: meeting.timeWimdow
       ? `${Math.floor(meeting.timeWimdow.startTime / 60)

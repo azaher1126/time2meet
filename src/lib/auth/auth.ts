@@ -87,6 +87,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // Handle session update trigger - refresh user data from database
       if (trigger === "update" && extToken.id) {
         const dbUser = await prisma.user.findUnique({
+          select: {
+            email: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+          },
           where: {
             id:
               typeof extToken.id === "number"

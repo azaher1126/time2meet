@@ -2,21 +2,13 @@ import Link from "next/link";
 import { format, isPast, isToday, isFuture } from "date-fns";
 import { TabView } from "../TabView";
 import { CopyLinkButton } from "../CopyButton";
+import { Meeting as DbMeeting } from "../../../prisma/generated/prisma/client";
 
-interface Meeting {
-  id: number;
-  title: string;
-  description: string | null;
-  location: string | null;
-  startdate: Date;
-  endDate: Date;
-  shareLink: string;
-  isPrivate: boolean;
-  createdAt: Date;
+type Meeting = DbMeeting & {
   _count?: {
     meetingResponses: number;
   };
-}
+};
 
 interface DashboardTabViewProps {
   createdMeetings: Meeting[];
@@ -167,7 +159,7 @@ function MeetingCard({
   const meetingLink = `m/${meeting.shareLink}`;
 
   const endDate = meeting.endDate;
-  const startDate = meeting.startdate;
+  const startDate = meeting.startDate;
   const isPastMeeting = isPast(endDate) && !isToday(endDate);
 
   return (

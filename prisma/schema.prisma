@@ -16,18 +16,18 @@ enum Role {
 }
 
 model User {
-  id            Int           @id @default(autoincrement())
-  email         String        @unique
-  firstName     String
-  lastName      String
-  passwordHash  String
-  role          Role          @default(USER)
-  isActive      Boolean       @default(true)
-  createdAt     DateTime      @default(now())
-  deactivatedAt DateTime?
-  activatedAt   DateTime      @default(now())
-  meetings      Meeting[]
-  loginRecords  LoginRecord[]
+  id               Int               @id @default(autoincrement())
+  email            String            @unique
+  firstName        String
+  lastName         String
+  passwordHash     String
+  role             Role              @default(USER)
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  deactivatedAt    DateTime?
+  activatedAt      DateTime          @default(now())
+  meetings         Meeting[]
+  loginRecords     LoginRecord[]
   meetingResponses MeetingResponse[]
 }
 
@@ -55,11 +55,11 @@ model Meeting {
   title            String
   description      String?
   location         String?
-  startdate        DateTime
+  startDate        DateTime
   endDate          DateTime
   timeWimdow       MeetingTimeWindow? @relation(fields: [timeWindowId], references: [id])
   timeWindowId     Int?
-  creator          User?               @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  creator          User?              @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   creatorId        Int?
   shareLink        String             @unique
   isPrivate        Boolean            @default(false)
@@ -81,7 +81,7 @@ model MeetingResponse {
   meeting           Meeting            @relation(fields: [meetingId], references: [id], onDelete: Cascade)
   meetingId         Int
   name              String
-  user              User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId            Int?
   availabilitySlots AvailabilitySlot[]
 
